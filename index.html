@@ -14,19 +14,7 @@ body{
   transition:.4s;
 }
 
-/* THEMES */
-.dark{
-  background-image:
-  linear-gradient(rgba(0,0,0,.75),rgba(0,0,0,.9)),
-  url("https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c");
-  color:white;
-}
-.light{
-  background-image:
-  linear-gradient(rgba(255,255,255,.75),rgba(255,255,255,.9)),
-  url("https://images.unsplash.com/photo-1489599849927-2ee91cede3ba");
-  color:black;
-}
+
 
 /* TOP BAR */
 .top{
@@ -167,11 +155,7 @@ input{
 <script>
 const API="https://www.omdbapi.com/?apikey=13da13a9";
 
-/* THEME */
-function toggleMode(){
- document.body.classList.toggle("dark");
- document.body.classList.toggle("light");
-}
+
 
 /* AI SUGGEST */
 function aiSuggest(q){
