@@ -1,273 +1,58 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>CineMind AI — Movie Explorer</title>
-
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CineMind AI Explorer</title>
 <style>
-*{box-sizing:border-box}
-body{
-  margin:0;
-  font-family:system-ui;
-  background-size:cover;
-  background-attachment:fixed;
-  transition:.4s;
-}
-
-
-
-/* TOP BAR */
-.top{
-  display:flex;
-  justify-content:space-between;
-  padding:16px;
-}
-.btn{
-  padding:10px 14px;
-  border:none;
-  border-radius:10px;
-  background:#2563eb;
-  color:white;
-  cursor:pointer;
-}
-
-/* TITLE */
-.title{
-  text-align:center;
-  font-size:30px;
-  font-weight:bold;
-}
-
-/* SEARCH */
-.searchWrap{
-  text-align:center;
-  margin:20px;
-}
-input{
-  padding:14px;
-  width:300px;
-  border-radius:12px;
-  border:none;
-  font-size:16px;
-}
-
-/* AI BOX */
-#ai{
-  text-align:center;
-  font-size:14px;
-  opacity:.9;
-  margin-top:6px;
-}
-
-/* GRID */
-#movies{
-  display:grid;
-  grid-template-columns:repeat(auto-fill,220px);
-  gap:22px;
-  justify-content:center;
-  padding:30px;
-}
-
-/* CARD */
-.card{
-  backdrop-filter:blur(14px);
-  background:rgba(255,255,255,.12);
-  border-radius:16px;
-  padding:12px;
-  transition:.3s;
-  cursor:pointer;
-}
-.card:hover{
-  transform:scale(1.05) rotateY(3deg);
-}
-.card img{
-  width:100%;
-  height:300px;
-  object-fit:cover;
-  border-radius:12px;
-}
-
-/* LOADER */
-.loader{
-  width:40px;height:40px;
-  border:4px solid #ccc;
-  border-top:4px solid #2563eb;
-  border-radius:50%;
-  animation:spin 1s linear infinite;
-  margin:auto;
-}
+*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:#111;color:#fff;transition:.3s}
+.light{background:#f5f5f5;color:#111}
+.top{display:flex;justify-content:space-between;padding:15px}
+.btn{padding:10px 14px;border:none;border-radius:8px;background:#2563eb;color:#fff;cursor:pointer}
+.title{text-align:center;font-size:30px;font-weight:bold}
+.searchWrap{text-align:center;margin:20px}
+input{padding:12px;width:300px;border-radius:8px;border:none}
+#ai{text-align:center;margin:10px}
+#status{text-align:center}
+#movies{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:20px;padding:20px}
+.card{background:rgba(255,255,255,.08);padding:12px;border-radius:12px}
+.card img{width:100%;height:300px;object-fit:cover;border-radius:10px}
+.loader{width:40px;height:40px;border:4px solid #ccc;border-top:4px solid #2563eb;border-radius:50%;animation:spin 1s linear infinite;margin:auto}
 @keyframes spin{to{transform:rotate(360deg)}}
-
-/* MODAL */
-.modal{
-  position:fixed; inset:0;
-  background:rgba(0,0,0,.7);
-  display:none;
-  align-items:center;
-  justify-content:center;
-}
-.modalBox{
-  background:white;
-  color:black;
-  padding:20px;
-  border-radius:16px;
-  max-width:420px;
-}
-
-/* CHAT AI */
-.chat{
-  position:fixed;
-  bottom:20px;
-  right:20px;
-  width:260px;
-  background:rgba(0,0,0,.7);
-  color:white;
-  padding:12px;
-  border-radius:14px;
-  font-size:14px;
-}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center}
+.modalBox{background:#fff;color:#000;padding:20px;border-radius:12px;max-width:450px}
+textarea{width:100%;height:80px}
 </style>
 </head>
-
-<body class="dark">
-
+<body>
 <div class="top">
-  <button class="btn" onclick="toggleMode()">Theme</button>
-  <button class="btn" onclick="showFav()">Favorites</button>
+<button class="btn" onclick="toggleMode()">Theme</button>
+<button class="btn" onclick="showFav()">Favorites</button>
 </div>
-
 <div class="title">🎬 CineMind AI Explorer</div>
-
 <div class="searchWrap">
-  <input id="search" placeholder="Search movie...">
-  <button class="btn" onclick="searchMovie()">Search</button>
-  <button class="btn" onclick="voiceSearch()">🎤</button>
+<input id="search" placeholder="Search movie...">
+<button class="btn" onclick="searchMovie()">Search</button>
+<button class="btn" onclick="voiceSearch()">🎤</button>
 </div>
-
-<div id="ai"></div>
-<div id="status"></div>
-<div id="movies"></div>
-
-<div class="modal" id="modal">
-  <div class="modalBox" id="modalBox"></div>
-</div>
-
+<div id="ai"></div><div id="status"></div><div id="movies"></div>
+<div class="modal" id="modal"><div class="modalBox" id="modalBox"></div></div>
 <script>
 const API="https://www.omdbapi.com/?apikey=13da13a9";
-
-
-
-/* AI SUGGEST */
-function aiSuggest(q){
- q=q.toLowerCase();
- if(q.includes("sad")) return "AI: emotional drama movies fit this mood";
- if(q.includes("space")) return "AI: try Interstellar or Gravity";
- if(q.includes("fight")) return "AI: action movies suggested";
- if(q.includes("love")) return "AI: romantic movies suggested";
- return "AI: search by mood, genre, or hero name";
-}
-
-/* VOICE SEARCH */
-function voiceSearch(){
- const rec=new (window.SpeechRecognition||window.webkitSpeechRecognition)();
- rec.onresult=e=>{
-   search.value=e.results[0][0].transcript;
-   searchMovie();
- };
- rec.start();
-}
-
-/* FAVORITES */
+const search=document.getElementById("search"),movies=document.getElementById("movies"),status=document.getElementById("status"),ai=document.getElementById("ai"),modal=document.getElementById("modal"),modalBox=document.getElementById("modalBox");
+function toggleMode(){document.body.classList.toggle("light")}
+function aiSuggest(q){q=q.toLowerCase();if(q.includes("sad"))return"AI: Emotional dramas";if(q.includes("space"))return"AI: Try Interstellar";if(q.includes("love"))return"AI: Romantic movies";return"AI: Search by title, genre or actor";}
+function voiceSearch(){const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR){alert("Voice search not supported.");return;}const r=new SR();r.onresult=e=>{search.value=e.results[0][0].transcript;searchMovie()};r.start();}
 function getFav(){return JSON.parse(localStorage.getItem("fav")||"[]")}
-function saveFav(m){
- const f=getFav();
- if(!f.find(x=>x.imdbID===m.imdbID)){
-   f.push(m);
-   localStorage.setItem("fav",JSON.stringify(f));
-   alert("Saved");
- }
-}
+function saveFav(m){let f=getFav();if(!f.find(x=>x.imdbID===m.imdbID)){f.push(m);localStorage.setItem("fav",JSON.stringify(f));alert("Saved");}}
 function showFav(){render(getFav())}
-
-/* SEARCH */
-async function searchMovie(){
- const q=search.value;
- ai.innerText=aiSuggest(q);
- status.innerHTML='<div class="loader"></div>';
- movies.innerHTML="";
-
- try{
-  const r=await fetch(API+"&s="+q);
-  const d=await r.json();
-  if(d.Response==="False"){
-    status.innerText="No results";
-    return;
-  }
-
-  const list=[];
-  for(const m of d.Search){
-    const r2=await fetch(API+"&i="+m.imdbID);
-    list.push(await r2.json());
-  }
-  status.innerText="";
-  render(list);
-
- }catch{
-  status.innerText="Network error";
- }
-}
-
-/* RENDER */
-function render(list){
- movies.innerHTML="";
- list.forEach(m=>{
-  const c=document.createElement("div");
-  c.className="card";
-  c.innerHTML=`
-    <img src="${m.Poster}">
-    <h3>${m.Title}</h3>
-    <p>${m.Year}</p>
-    <p>⭐ ${m.imdbRating}</p>
-    <button class="btn">Save</button>
-  `;
-  c.onclick=()=>showDetail(m);
-  c.querySelector("button").onclick=e=>{
-    e.stopPropagation();
-    saveFav(m);
-  };
-  movies.appendChild(c);
- });
-}
-
-/* MODEL */
-function showDetail(m){
- modalBox.innerHTML=`
-  <h2>${m.Title}</h2>
-  <p><b>Year:</b> ${m.Year}</p>
-  <p><b>Rating:</b> ${m.imdbRating}</p>
-  <p>${m.Plot}</p>
-  <textarea id="note" placeholder="Your note"></textarea>
-  <button class="btn" onclick="saveNote('${m.imdbID}')">Save Note</button>
-  <button class="btn" onclick="closeModal()">Close</button>
- `;
- modal.style.display="flex";
-}
+async function searchMovie(){const q=search.value.trim();if(!q){status.innerText="Enter a movie name.";return;}ai.innerText=aiSuggest(q);status.innerHTML='<div class="loader"></div>';movies.innerHTML="";
+try{const r=await fetch(`${API}&s=${encodeURIComponent(q)}`);const d=await r.json();if(d.Response==="False"){status.innerText=d.Error;return;}let list=[];for(const m of d.Search){const x=await fetch(`${API}&i=${m.imdbID}`);list.push(await x.json())}status.innerText="";render(list);}catch(e){status.innerText="Network error";}}
+function render(list){movies.innerHTML="";list.forEach(m=>{const c=document.createElement("div");c.className="card";const poster=m.Poster!=="N/A"?m.Poster:"https://via.placeholder.com/220x300?text=No+Image";c.innerHTML=`<img src="${poster}"><h3>${m.Title}</h3><p>${m.Year}</p><p>⭐ ${m.imdbRating||"N/A"}</p><button class="btn">Save</button>`;c.onclick=()=>showDetail(m);c.querySelector("button").onclick=e=>{e.stopPropagation();saveFav(m)};movies.appendChild(c);});}
+function showDetail(m){const notes=JSON.parse(localStorage.getItem("notes")||"{}");modalBox.innerHTML=`<h2>${m.Title}</h2><p><b>Year:</b> ${m.Year}</p><p><b>Rating:</b> ${m.imdbRating}</p><p>${m.Plot}</p><textarea id="note">${notes[m.imdbID]||""}</textarea><br><button class="btn" onclick="saveNote('${m.imdbID}')">Save Note</button> <button class="btn" onclick="closeModal()">Close</button>`;modal.style.display="flex";}
 function closeModal(){modal.style.display="none"}
-modal.onclick=closeModal;
-
-/* USER NOTES */
-function saveNote(id){
- const notes=JSON.parse(localStorage.getItem("notes")||"{}");
- notes[id]=note.value;
- localStorage.setItem("notes",JSON.stringify(notes));
- alert("Note saved");
-}
-
-/* ENTER KEY */
-search.addEventListener("keypress",e=>{
- if(e.key==="Enter") searchMovie();
-});
+modal.onclick=e=>{if(e.target===modal)closeModal();}
+function saveNote(id){let n=JSON.parse(localStorage.getItem("notes")||"{}");n[id]=document.getElementById("note").value;localStorage.setItem("notes",JSON.stringify(n));alert("Note saved");}
+search.addEventListener("keypress",e=>{if(e.key==="Enter")searchMovie();});
 </script>
-
-</body>
-</html>
+</body></html>
